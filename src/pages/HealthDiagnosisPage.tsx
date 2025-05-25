@@ -423,63 +423,123 @@ const HealthDiagnosisPage: React.FC = () => {
               </div>
             )}
             
-            {/* Step 3: Vital Signs */}
             {step === 3 && (
-              <div className="animate-fade-in space-y-6">
-                <div className="flex items-center mb-4">
-                  <BarChart className="text-secondary-500 mr-2" size={24} />
-                  <h2 className="text-xl font-semibold">Vital Signs</h2>
+  <div className="animate-fade-in space-y-6">
+    <div className="flex items-center mb-4">
+      <BarChart className="text-secondary-500 mr-2" size={24} />
+      <h2 className="text-xl font-semibold">Vital Signs</h2>
+    </div>
+
+    <div className="space-y-4">
+      {vitalSigns.map((vitalSign, index) => {
+        // Simple validator function per vital sign
+        const validate = (name: string, value: string) => {
+          if (!value) return '';
+          switch (name.toLowerCase()) {
+            case 'temperature': {
+              const num = parseFloat(value);
+              if (isNaN(num) || num < 35 || num > 42)
+                return 'Temp must be 35-42°C';
+              break;
+            }
+            case 'heart rate': {
+              const num = parseInt(value);
+              if (isNaN(num) || num < 40 || num > 200)
+                return 'Heart rate 40-200 BPM';
+              break;
+            }
+            case 'respiratory rate': {
+              const num = parseInt(value);
+              if (isNaN(num) || num < 8 || num > 40)
+                return 'Resp rate 8-40 breaths/min';
+              break;
+            }
+            case 'oxygen saturation': {
+              const num = parseInt(value);
+              if (isNaN(num) || num < 70 || num > 100)
+                return 'O2 saturation 70-100%';
+              break;
+            }
+            case 'blood pressure': {
+              if (!/^\d{2,3}\/\d{2,3}$/.test(value))
+                return 'Format: systolic/diastolic e.g. 120/80';
+              break;
+            }
+          }
+          return '';
+        };
+
+        const errorMsg = validate(vitalSign.name, vitalSign.value);
+
+        return (
+          <div key={vitalSign.name} className="border border-gray-200 rounded-lg p-4">
+            <div className="flex flex-wrap justify-between items-center">
+              <div className="mb-2 md:mb-0">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  {vitalSign.name}
+                </label>
+                <div className="flex items-center">
+                  <input
+                    type="text"
+                    className={`input max-w-[180px] ${errorMsg ? 'border-red-500' : ''}`}
+                    placeholder={`Enter ${vitalSign.name.toLowerCase()}`}
+                    value={vitalSign.value}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      // Optionally block invalid chars for BP here
+                      if (
+                        vitalSign.name.toLowerCase() === 'blood pressure' &&
+                        val &&
+                        !/^[\d\/]*$/.test(val)
+                      ) {
+                        // disallow non-digit and non-slash chars
+                        return;
+                      }
+                      handleVitalSignChange(index, val);
+                    }}
+                  />
+                  <span className="ml-2 text-gray-500">{vitalSign.unit}</span>
+
+                  {vitalSign.value && (
+                    <span
+                      className={`ml-3 px-2 py-1 rounded-full text-xs font-medium ${
+                        vitalSign.status === 'normal'
+                          ? 'bg-green-100 text-green-800'
+                          : vitalSign.status === 'abnormal'
+                          ? 'bg-yellow-100 text-yellow-800'
+                          : 'bg-red-100 text-red-800'
+                      }`}
+                    >
+                      {vitalSign.status}
+                    </span>
+                  )}
                 </div>
-                
-                <div className="space-y-4">
-                  {vitalSigns.map((vitalSign, index) => (
-                    <div key={vitalSign.name} className="border border-gray-200 rounded-lg p-4">
-                      <div className="flex flex-wrap justify-between items-center">
-                        <div className="mb-2 md:mb-0">
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            {vitalSign.name}
-                          </label>
-                          <div className="flex items-center">
-                            <input
-                              type="text"
-                              className="input max-w-[180px]"
-                              placeholder={`Enter ${vitalSign.name.toLowerCase()}`}
-                              value={vitalSign.value}
-                              onChange={(e) => handleVitalSignChange(index, e.target.value)}
-                            />
-                            <span className="ml-2 text-gray-500">{vitalSign.unit}</span>
-                            
-                            {vitalSign.value && (
-                              <span className={`ml-3 px-2 py-1 rounded-full text-xs font-medium ${
-                                vitalSign.status === 'normal' ? 'bg-green-100 text-green-800' :
-                                vitalSign.status === 'abnormal' ? 'bg-yellow-100 text-yellow-800' : 
-                                'bg-red-100 text-red-800'
-                              }`}>
-                                {vitalSign.status}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        
-                        <div className="text-sm text-gray-500">
-                          {vitalSign.name === 'Blood Pressure' && (
-                            <span>Format: systolic/diastolic (e.g., 120/80)</span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-blue-800 flex items-start">
-                  <AlertCircle className="text-blue-500 mr-2 mt-0.5 flex-shrink-0" size={18} />
-                  <p className="text-sm">
-                    Enter as many vital signs as are available. More data leads to more accurate 
-                    diagnostic suggestions. If a measurement is not available, you can leave it blank.
-                  </p>
-                </div>
+                {errorMsg && (
+                  <p className="text-red-600 text-xs mt-1">{errorMsg}</p>
+                )}
               </div>
-            )}
+
+              <div className="text-sm text-gray-500">
+                {vitalSign.name === 'Blood Pressure' && (
+                  <span>Format: systolic/diastolic (e.g., 120/80)</span>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+
+    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-blue-800 flex items-start">
+      <AlertCircle className="text-blue-500 mr-2 mt-0.5 flex-shrink-0" size={18} />
+      <p className="text-sm">
+        Enter as many vital signs as are available. More data leads to more accurate
+        diagnostic suggestions. If a measurement is not available, you can leave it blank.
+      </p>
+    </div>
+  </div>
+)}
+
             
             {/* Step 4: Diagnosis Results */}
             {step === 4 && (
