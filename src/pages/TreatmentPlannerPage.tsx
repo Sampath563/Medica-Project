@@ -532,7 +532,6 @@
 // #region Imports
 // # TreatmentPlannerPage.tsx
 // Page: Main wrapper that connects all subcomponents
-
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Activity, BrainCircuit } from "lucide-react";
@@ -634,5 +633,3 @@ const TreatmentPlannerPage = () => {
 };
 
 export default TreatmentPlannerPage;
-
-
